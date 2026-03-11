@@ -111,74 +111,106 @@ Every test spec file must follow this exact structure:
 <One or two sentences describing what the test validates.>
 
 ## Preconditions
-<Bulleted list of conditions that must be true before the test starts.>
+<Bulleted list of assumed environmental state — things the test runner guarantees before this test begins. These are NOT actionable steps.>
+
+Examples of valid preconditions:
+- App is installed and launched
+- Device has network connectivity
+- User is logged out / logged in
+
+## Setup Flow
+<Numbered list of plain-english, actionable steps the agent must perform to reach the required starting state before the main test flow begins. Write these exactly like Test Flow steps — specific, sequential, referencing actual UI elements.>
+
+If no setup is needed beyond what Preconditions guarantee, write "None required."
 
 ## Test Flow
 <Numbered list of sequential user actions to perform.>
 
-## Expected Result
-<Bulleted list of observable outcomes after executing the test flow.>
-
-## Verification
-<Bulleted list of specific checks to confirm correctness.>
-
-## Pass Criteria
-<Bulleted list — the test passes when these conditions are met.>
+## Assertions
+<Bulleted list of specific, observable checks to confirm the test passed. Each assertion should be independently verifiable.>
 
 ## Fail Criteria
-<Bulleted list — the test fails when any of these conditions occur.>
+<Bulleted list — the test fails when any of these conditions occur. Focus on edge cases like crashes, errors, and unexpected states that aren't simply the inverse of assertions.>
 ```
+
+### Section Guidance
+
+#### Preconditions vs Setup Flow
+
+These two sections serve different purposes. Getting this right is critical.
+
+| | Preconditions | Setup Flow |
+|---|---|---|
+| **Purpose** | Declares assumed state | Actionable steps to reach required state |
+| **Who acts** | The test runner / environment | The agent executing the test |
+| **Format** | Bulleted descriptions | Numbered steps (like Test Flow) |
+| **Example** | "App is installed and launched" | "1. Tap **Skip** on the onboarding welcome screen." |
+
+**Rules:**
+- If a condition requires the agent to *do something* in the app, it belongs in **Setup Flow**, not Preconditions.
+- "User has completed onboarding" is **wrong** as a precondition — it should be a Setup Flow with explicit steps to skip/complete onboarding.
+- "App is installed and launched" is a **correct** precondition — it's guaranteed by the environment.
+- Preconditions should be limited to things that are truly environmental: app installed, network available, user logged in/out, specific OS version.
+
+#### Assertions (replaces Expected Result, Verification, and Pass Criteria)
+
+The `## Assertions` section is the single source of truth for what "pass" means. Do not create separate Expected Result, Verification, or Pass Criteria sections — they cause redundancy and ambiguity.
+
+Write each assertion as a specific, independently checkable statement:
+- ✅ "**Hindi** appears in the **Your languages** list on the **Wikipedia languages** screen"
+- ✅ "The **PRIMARY** label is displayed next to the first language in the list"
+- ❌ "The language was added successfully" (too vague — what does "successfully" look like?)
+
 
 ### Writing Good Test Flows
 
 The **Test Flow** drives the entire test execution. Guidelines:
 
-- **Be specific**: "Tap the 'Add to Cart' button on the product detail screen" not "Add item"
+- **Be specific**: "Tap the **Add to Cart** button on the product detail screen" not "Add item"
 - **Include verification inline where helpful**: "Verify the cart badge shows '1' after adding"
 - **Describe the full flow**: Navigate → Interact → Assert
 - **Reference actual UI elements**: Use text labels, button names, and screen titles from the source code
 - **Keep it sequential**: Write steps in execution order
 - **Bold UI element names**: Use **bold** for screen names, buttons, and labels referenced in the flow
 - **Do not include "open or launch the app"**: Begin directly with navigation or interaction steps — app launch is assumed
+- **Apply the same rules to Setup Flow**: Setup Flow steps should be just as specific and actionable as Test Flow steps
 
 ### Example Test Spec
 
 **File:** `.test/add_hindi_language.md`
 
 ```markdown
-# Test Case: Add Hindi Language in Wikipedia Settings
+# Test Case: Add Hindi Language From Settings
 
 ## Objective
-Verify that the Hindi language can be added successfully in Wikipedia after skipping onboarding.
+Verify that a user can add Hindi to their preferred languages list via the Settings screen.
 
 ## Preconditions
 - Wikipedia app is installed and launched
-- User is on the onboarding screen or first-launch flow
+- Device has network connectivity
+
+## Setup Flow
+1. If the onboarding welcome screen is displayed, tap **Skip** to dismiss it.
+2. Wait for the **Explore** feed to load on the main screen.
 
 ## Test Flow
-1. Open Wikipedia.
-2. Skip onboarding.
-3. Go to **Settings**.
-4. Add **Hindi** language.
-5. Verify that the Hindi language is added successfully.
+1. Tap the **Settings** tab (gear icon) in the bottom tab bar.
+2. Tap **My languages** in the settings list.
+3. Observe the **Your languages** list showing the current preferred languages.
+4. Tap the **Add language** button below the languages list.
+5. In the **Find language** search field on the **Choose language** screen, type "Hindi".
+6. Tap **Hindi** from the search results.
+7. Wait for the screen to return to the **Wikipedia languages** screen.
 
-## Expected Result
-- User is able to skip onboarding and reach the main app.
-- In **Settings**, Hindi can be selected and added.
-- Hindi appears in the list of added/preferred languages.
-- The app reflects that Hindi was added successfully.
-
-## Verification
-- Confirm **Hindi** is visible in the selected languages list.
-- Confirm no error message appears while adding the language.
-
-## Pass Criteria
-- Hindi is added and displayed successfully in Wikipedia settings.
+## Assertions
+- **Hindi** appears in the **Your languages** list on the **Wikipedia languages** screen.
+- No error message or alert is displayed at any point during the flow.
 
 ## Fail Criteria
-- Hindi does not appear after adding.
-- An error is shown.
-- The app does not save the language selection.
+- **Hindi** does not appear in the preferred languages list after selection.
+- An error alert or unexpected modal is shown during any step.
+- The app crashes or becomes unresponsive.
+- The **Choose language** screen does not dismiss after selecting Hindi.
 ```
 
 ## Test Prioritization
@@ -198,9 +230,12 @@ Verify that the Hindi language can be added successfully in Wikipedia after skip
 - [ ] `.test/` folder created if missing
 - [ ] Each test name describes a user action (not implementation detail)
 - [ ] Test flows are specific, sequential, and include verification steps
+- [ ] Setup flows are equally specific and actionable — no vague state descriptions
 - [ ] Every test spec follows the markdown template exactly
 - [ ] Files are named in `snake_case` matching the test name
 - [ ] No invented credentials, OTPs, or random login attempts
+- [ ] Preconditions contain only environmental assumptions, not actionable steps
+- [ ] "Assertions" is used — not separate Expected Result / Verification / Pass Criteria sections
 
 ## Anti-Patterns
 
@@ -218,3 +253,9 @@ Verify that the Hindi language can be added successfully in Wikipedia after skip
 
 ❌ **Unjustified relaunch**: "Relaunch app and continue" without reason or post-relaunch checks
 ✅ **Intentional relaunch**: Relaunch only when required and verify the expected restored state after relaunch
+
+❌ **Unactionable preconditions**: "User has completed onboarding" as a precondition
+✅ **Actionable setup**: Move onboarding steps into Setup Flow: "1. Tap **Skip** on the onboarding welcome screen."
+
+❌ **Redundant verification sections**: Separate Expected Result, Verification, and Pass Criteria that repeat the same checks
+✅ **Single Assertions section**: One list of specific, observable checks
