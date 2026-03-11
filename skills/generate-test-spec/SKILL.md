@@ -152,6 +152,26 @@ These two sections serve different purposes. Getting this right is critical.
 - "App is installed and launched" is a **correct** precondition — it's guaranteed by the environment.
 - Preconditions should be limited to things that are truly environmental: app installed, network available, user logged in/out, specific OS version.
 
+**Setup Flow must ensure idempotent state:**
+
+The Setup Flow is responsible for guaranteeing the test can run correctly **regardless of prior app state**. If a previous test run (or manual use) left the app in a state that would cause this test to fail or behave differently, the Setup Flow must undo that.
+
+Think about it this way: *what could go wrong if this test runs twice in a row?*
+
+- If testing "add Hindi language" and Hindi might already be in the list from a prior run, the Setup Flow should check for Hindi and remove it first.
+- If testing "create a new item" and the item might already exist, the Setup Flow should delete it first.
+- If testing "enable a toggle" and the toggle might already be on, the Setup Flow should turn it off first.
+
+Example — an "add language" test with idempotent setup:
+```
+## Setup Flow
+1. If the onboarding welcome screen is displayed, tap **Skip** to dismiss it.
+2. Tap the **Settings** tab (gear icon) in the bottom tab bar.
+3. Tap **My languages** in the settings list.
+4. If **Hindi** appears in the **Your languages** list, tap **Edit**, delete **Hindi**, then tap **Done** to remove it.
+5. Navigate back to the main screen.
+```
+
 #### Assertions (replaces Expected Result, Verification, and Pass Criteria)
 
 The `## Assertions` section is the single source of truth for what "pass" means. Do not create separate Expected Result, Verification, or Pass Criteria sections — they cause redundancy and ambiguity.
@@ -191,7 +211,10 @@ Verify that a user can add Hindi to their preferred languages list via the Setti
 
 ## Setup Flow
 1. If the onboarding welcome screen is displayed, tap **Skip** to dismiss it.
-2. Wait for the **Explore** feed to load on the main screen.
+2. Tap the **Settings** tab (gear icon) in the bottom tab bar.
+3. Tap **My languages** in the settings list.
+4. If **Hindi** appears in the **Your languages** list, tap **Edit**, delete **Hindi**, then tap **Done** to remove it.
+5. Navigate back to the main screen by tapping the **Explore** tab.
 
 ## Test Flow
 1. Tap the **Settings** tab (gear icon) in the bottom tab bar.
