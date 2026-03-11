@@ -1,0 +1,20 @@
+{
+    "name": "test-spec-gen",
+    "description": "Marketplace for test-spec-gen plugin",
+    "owner": {
+        "name": "FinalRun",
+        "email": "support@finalrun.com"
+    },
+    "plugins": [
+        {
+            "name": "test-spec-gen",
+            "description": "Generate test specifications for mobile apps as local markdown files",
+            "version": "1.0.0",
+            "source": "./",
+            "author": {
+                "name": "FinalRun",
+                "email": "support@finalrun.com"
+            }
+        }
+    ]
+}
