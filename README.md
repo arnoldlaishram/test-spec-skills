@@ -17,7 +17,5 @@ AI skills for generating mobile app test specifications as local markdown files 
 ## Manual Install
 
 ```bash
-npx -y ai-agent-skills install final-run/test-spec-skills --agent claude
-npx -y ai-agent-skills install final-run/test-spec-skills --agent cursor
-npx -y ai-agent-skills install final-run/test-spec-skills --agent codex
+npx skills add https://github.com/arnoldlaishram/test-spec-skills.git
 ```
